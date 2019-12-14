@@ -1,0 +1,15 @@
+{
+  "name": "essh",
+  "version": "0.1.0",
+  "description": "Yet Another JavaScript Shell",
+  "main": "lib/index.js",
+  "author": "Jeremy Lam \"JLChnToZ\" <jeremylam619@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.7.3"
+  },
+  "dependencies": {
+    "@types/node": "12",
+    "fast-glob": "^3.1.1"
+  }
+}
