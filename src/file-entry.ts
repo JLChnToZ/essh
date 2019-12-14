@@ -2,10 +2,11 @@ import {
   existsSync, unlinkSync, readdirSync, lstatSync, statSync,
   readFileSync, writeFileSync, copyFileSync, Stats,
 } from 'fs';
-import { execFileSync } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
 import { resolve } from 'path';
 import { platform, homedir, tmpdir } from 'os';
 import { sync as glob } from 'fast-glob';
+import { ExecProcess, wrap as wrapExec } from './exec-process';
 
 export namespace Symbols {
   export const path = Symbol.for('path');
@@ -14,20 +15,11 @@ export namespace Symbols {
   export const stat = Symbol.for('stat');
   export const lstat = Symbol.for('lstat');
   export const glob = Symbol.for('glob');
+  export const exec = Symbol.for('exec');
+  export const execAsync = Symbol.for('execAsync');
 }
 
-const allSymbols = Object.values<PropertyKey>(Symbols);
 const nonConfigurables: PropertyKey[] = [];
-(() => {
-  const fn = new (class extends Function {});
-  for(const key of Reflect.ownKeys(fn)) {
-    const descriptor = Object.getOwnPropertyDescriptor(fn, key)!;
-    if(!descriptor.configurable) {
-      allSymbols.push(key);
-      nonConfigurables.push(key);
-    }
-  }
-})();
 
 export interface FileEntryBase {
   readonly [Symbols.path]: string;
@@ -36,6 +28,8 @@ export interface FileEntryBase {
   readonly [Symbols.stat]: Stats;
   [Symbols.data]: Buffer | string;
   [Symbols.glob](patterns: string | string[]): FileEntry[];
+  [Symbols.exec](...args: any[]): string;
+  [Symbols.execAsync](...args: any[]): ExecProcess;
 }
 
 export interface DirectoryEntry extends FileEntryBase {
@@ -93,6 +87,14 @@ class FileEntryImpl extends Function implements FileEntryBase {
   public [Symbols.glob](patterns: string | string[]): FileEntry[] {
     return glob(patterns, { cwd: this[Symbols.path] })
     .map(FileEntryImpl.get, FileEntryImpl);
+  }
+
+  public [Symbols.exec](...args: any[]) {
+    return execFileSync(this[Symbols.path], args);
+  }
+
+  public [Symbols.execAsync](...args: any[]) {
+    return wrapExec(execFile(this[Symbols.path], resolveArgs(args)));
   }
   
   public toString() { return this[Symbols.path]; }
@@ -178,14 +180,14 @@ const fileEntryHandler = Object.freeze<ProxyHandler<FileEntry>>({
 
   ownKeys(entry) {
     if(!entry[Symbols.exists] || !entry[Symbols.lstat].isDirectory())
-      return Array.from(allSymbols);
+      return nonConfigurables;
     const keys: PropertyKey[] = readdirSync(entry[Symbols.path]);
-    keys.push(...allSymbols);
+    keys.push(...nonConfigurables);
     return keys;
   },
 
   apply(entry, _this, args) {
-    return execFileSync(entry[Symbols.path], resolveArgs(args));
+    return entry[Symbols.exec].apply(entry, args);
   },
 
   construct() {
@@ -217,6 +219,15 @@ export const roots: RootDirectories = {
     return FileEntryImpl.get(tmpdir());
   },
 };
+
+(() => {
+  const fn = new FileEntryImpl('dummy');
+  for(const key of Reflect.ownKeys(fn)) {
+    const descriptor = Object.getOwnPropertyDescriptor(fn, key)!;
+    if(!descriptor.configurable)
+      nonConfigurables.push(key);
+  }
+})();
 
 switch(platform()) {
   case 'win32': {

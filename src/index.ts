@@ -5,7 +5,7 @@ const rootTemplate = Object.getOwnPropertyDescriptors<any>(roots);
 defineToTemplate('FileEntry', FileEntry);
 for(const symbolKey of Object.keys($))
   defineToTemplate(`$$${symbolKey}`, $[symbolKey as keyof typeof $]);
-  
+
 const repl = startRepl({
   prompt: 'ESSH> ',
   writer(this: REPLServer, value: any) {
