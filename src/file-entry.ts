@@ -160,21 +160,16 @@ const fileEntryHandler = Object.freeze<ProxyHandler<FileEntry>>({
   },
 
   getOwnPropertyDescriptor(entry, key) {
-    switch(key) {
-      case Symbols.path:
-        return Reflect.getOwnPropertyDescriptor(entry, key);
-      default:
-        if(nonConfigurables.indexOf(key) >= 0)
-          return Reflect.getOwnPropertyDescriptor(entry, key);
-        if(typeof key === 'string') {
-          FileEntryImpl.ensureEntry(entry, key);
-          if(entry[key][Symbols.exists]) return {
-            value: entry[key],
-            writable: false,
-            configurable: true,
-            enumerable: true,
-          };
-        }
+    if(nonConfigurables.indexOf(key) >= 0)
+      return Reflect.getOwnPropertyDescriptor(entry, key);
+    if(typeof key === 'string') {
+      FileEntryImpl.ensureEntry(entry, key);
+      if(entry[key][Symbols.exists]) return {
+        value: entry[key],
+        writable: false,
+        configurable: true,
+        enumerable: true,
+      };
     }
   },
 
@@ -220,14 +215,14 @@ export const roots: RootDirectories = {
   },
 };
 
-(() => {
+{
   const fn = new FileEntryImpl('dummy');
   for(const key of Reflect.ownKeys(fn)) {
     const descriptor = Object.getOwnPropertyDescriptor(fn, key)!;
     if(!descriptor.configurable)
       nonConfigurables.push(key);
   }
-})();
+}
 
 switch(platform()) {
   case 'win32': {

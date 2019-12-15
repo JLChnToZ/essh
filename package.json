@@ -4,12 +4,28 @@
   "description": "Yet Another JavaScript Shell",
   "main": "lib/index.js",
   "author": "Jeremy Lam \"JLChnToZ\" <jeremylam619@gmail.com>",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JLChnToZ/essh.git"
+  },
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JLChnToZ/essh/issues"
+  },
+  "homepage": "https://github.com/JLChnToZ/essh#readme",
   "devDependencies": {
     "typescript": "^3.7.3"
   },
   "dependencies": {
     "@types/node": "12",
     "fast-glob": "^3.1.1"
+  },
+  "bin": {
+    "essh": "lib/cli.js"
   }
 }

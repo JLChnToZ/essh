@@ -20,3 +20,7 @@ const execProcessExtensions: Partial<ExecProcess> = {
 export function wrap(childProc: ChildProcess) {
   return Object.assign(childProc, execProcessExtensions) as ExecProcess;
 }
+
+export function extend(name: string, fn: (this: ExecProcess, ...args: any[]) => any) {
+  (execProcessExtensions as any)[name] = fn;
+}
