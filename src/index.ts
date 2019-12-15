@@ -12,6 +12,31 @@ defineToTemplate('FileEntry', FileEntry);
 for(const symbolKey of Object.keys($))
   defineToTemplate(`$$${symbolKey}`, $[symbolKey as keyof typeof $]);
 
+for(const key of Reflect.ownKeys(process) as (keyof typeof process)[]) {
+  if(typeof key !== 'string' || key[0] === '_')
+    continue;
+  const descriptor = Object.getOwnPropertyDescriptor(process, key);
+  if(!descriptor)
+    continue;
+  if(descriptor.get || descriptor.set) {
+    rootTemplate[key] = {
+      get: descriptor.get && descriptor.get.bind(process),
+      set: descriptor.set && descriptor.set.bind(process),
+    };
+    continue;
+  }
+  if(typeof descriptor.value === 'function') {
+    descriptor.value = descriptor.value.bind(process);
+    rootTemplate[key] = descriptor;
+    continue;
+  }
+  const k = key;
+  rootTemplate[key] = {
+    get: () => process[k],
+    set: descriptor.writable ? value => (process as any)[k] = value : undefined,
+  };
+}
+
 function defineToTemplate(key: string, value: any, writable?: boolean) {
   rootTemplate[key] = { value, writable };
 }
