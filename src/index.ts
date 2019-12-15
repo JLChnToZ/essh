@@ -3,14 +3,15 @@ import {
   ReplOptions,
   Recoverable as RecoverableError,
 } from 'repl';
-import { Symbols as $, FileEntry, roots } from './file-entry';
+import { Symbols, FileEntry, roots } from './file-entry';
 import { runInContext } from 'vm';
 import { isThenable } from './utils';
+import { wrappedShell } from './shell-interop';
 
 const rootTemplate: PropertyDescriptorMap = Object.getOwnPropertyDescriptors(roots);
 defineToTemplate('FileEntry', FileEntry);
-for(const symbolKey of Object.keys($))
-  defineToTemplate(`$$${symbolKey}`, $[symbolKey as keyof typeof $]);
+for(const symbolKey of Object.keys(Symbols))
+  defineToTemplate(`$${symbolKey}`, Symbols[symbolKey as keyof typeof Symbols]);
 
 for(const key of Reflect.ownKeys(process) as (keyof typeof process)[]) {
   if(typeof key !== 'string' || key[0] === '_')
@@ -36,6 +37,8 @@ for(const key of Reflect.ownKeys(process) as (keyof typeof process)[]) {
     set: descriptor.writable ? value => (process as any)[k] = value : undefined,
   };
 }
+
+defineToTemplate('$', wrappedShell);
 
 function defineToTemplate(key: string, value: any, writable?: boolean) {
   rootTemplate[key] = { value, writable };

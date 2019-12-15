@@ -55,7 +55,7 @@ export interface FileEntryConstructor {
 
 export interface RootDirectories {
   readonly [directory: string]: FileEntry;
-  $: FileEntry;
+  _: FileEntry;
 }
 
 class FileEntryImpl extends Function implements FileEntryBase {
@@ -211,18 +211,18 @@ export const FileEntry = new Proxy<FileEntryConstructor>(FileEntryImpl as any, {
 });
 
 export const roots: RootDirectories = {
-  get $() {
+  get _() {
     return FileEntryImpl.get(process.cwd());
   },
-  set $(value: FileEntry) {
+  set _(value: FileEntry) {
     if(!value[Symbols.exists] || !value[Symbols.lstat].isDirectory())
       throw new TypeError('Path does not exists.');
     process.chdir(value[Symbols.path]);
   },
-  get $home() {
+  get _home() {
     return FileEntryImpl.get(homedir());
   },
-  get $tmp() {
+  get _temp() {
     return FileEntryImpl.get(tmpdir());
   },
 };
@@ -242,7 +242,7 @@ switch(platform()) {
     const endDrive = 'Z'.charCodeAt(0);
     for(let i = startDrive; i <= endDrive; i++) {
       const driveLetter = String.fromCharCode(i);
-      Object.defineProperty(roots, `$${driveLetter}`, {
+      Object.defineProperty(roots, `_${driveLetter}`, {
         get: FileEntryImpl.bindGet(`${driveLetter}:`),
         enumerable: true,
         configurable: true,
