@@ -1,6 +1,7 @@
 import {
   existsSync, unlinkSync, readdirSync, lstatSync, statSync,
   readFileSync, writeFileSync, copyFileSync, Stats,
+  createWriteStream,
 } from 'fs';
 import { execFileSync, spawn } from 'child_process';
 import { resolve, basename } from 'path';
@@ -8,6 +9,8 @@ import { platform, homedir, tmpdir } from 'os';
 import { sync as glob } from 'fast-glob';
 import { ExecProcess, wrap as wrapExec } from './exec-process';
 import { sync as which } from 'which';
+import { Stream } from 'stream';
+import { isThenable } from './utils';
 
 export namespace Symbols {
   export const path = Symbol.for('path');
@@ -68,7 +71,7 @@ class FileEntryImpl extends Function implements FileEntryBase {
   }
 
   public set [Symbols.data](value) {
-    writeFileSync(this[Symbols.path], value);
+    resolveAndWriteFile(this[Symbols.path], value);
   }
 
   public get [Symbols.lstat]() {
@@ -278,6 +281,24 @@ function resolveArgs(args: any): any[] {
   return args;
 }
 
-function disabledHandler() {
+function resolveAndWriteFile(path: string, data: any) {
+  if(!isThenable(data)) return writeFile(path, data);
+  Promise.resolve(data).then(resolvedData => writeFile(path, resolvedData));
+}
+
+function writeFile(path: string, data: any): void {
+  if(data == null)
+    return void writeFileSync(path, Buffer.allocUnsafe(0));
+  if(data instanceof Stream)
+    return void data.pipe(createWriteStream(path));
+  if(typeof data === 'object' || typeof data === 'function') {
+    const { stdout } = data;
+    if(stdout instanceof Stream)
+      return void stdout.pipe(createWriteStream(path));
+  }
+  writeFileSync(path, data);
+}
+
+function disabledHandler(): false {
   return false;
 }
