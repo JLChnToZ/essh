@@ -3,10 +3,11 @@ import {
   readFileSync, writeFileSync, copyFileSync, Stats,
 } from 'fs';
 import { execFileSync, spawn } from 'child_process';
-import { resolve } from 'path';
+import { resolve, basename } from 'path';
 import { platform, homedir, tmpdir } from 'os';
 import { sync as glob } from 'fast-glob';
 import { ExecProcess, wrap as wrapExec } from './exec-process';
+import { sync as which } from 'which';
 
 export namespace Symbols {
   export const path = Symbol.for('path');
@@ -90,11 +91,11 @@ class FileEntryImpl extends Function implements FileEntryBase {
   }
 
   public [Symbols.exec](...args: any[]) {
-    return execFileSync(this[Symbols.path], resolveArgs(args));
+    return execFileSync(resolveExecName(this[Symbols.path]), resolveArgs(args));
   }
 
   public [Symbols.execAsync](...args: any[]) {
-    return wrapExec(spawn(this[Symbols.path], resolveArgs(args), {
+    return wrapExec(spawn(resolveExecName(this[Symbols.path]), resolveArgs(args), {
       windowsHide: true,
     }));
   }
@@ -248,6 +249,16 @@ switch(platform()) {
     });
     break;
   }
+}
+
+function resolveExecName(path: string) {
+  try {
+    if(!existsSync(path))
+      return which(basename(path));
+  } catch {
+    // No luck
+  }
+  return path;
 }
 
 function resolveArgs(args: any): any[] {
