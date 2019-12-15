@@ -2,7 +2,7 @@ import {
   existsSync, unlinkSync, readdirSync, lstatSync, statSync,
   readFileSync, writeFileSync, copyFileSync, Stats,
 } from 'fs';
-import { execFile, execFileSync } from 'child_process';
+import { execFileSync, spawn } from 'child_process';
 import { resolve } from 'path';
 import { platform, homedir, tmpdir } from 'os';
 import { sync as glob } from 'fast-glob';
@@ -90,11 +90,13 @@ class FileEntryImpl extends Function implements FileEntryBase {
   }
 
   public [Symbols.exec](...args: any[]) {
-    return execFileSync(this[Symbols.path], args);
+    return execFileSync(this[Symbols.path], resolveArgs(args));
   }
 
   public [Symbols.execAsync](...args: any[]) {
-    return wrapExec(execFile(this[Symbols.path], resolveArgs(args)));
+    return wrapExec(spawn(this[Symbols.path], resolveArgs(args), {
+      windowsHide: true,
+    }));
   }
   
   public toString() { return this[Symbols.path]; }
