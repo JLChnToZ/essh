@@ -51,7 +51,8 @@ export interface FileEntryConstructor {
 }
 
 export interface RootDirectories {
-  [directory: string]: FileEntry;
+  readonly [directory: string]: FileEntry;
+  $: FileEntry;
 }
 
 class FileEntryImpl extends Function implements FileEntryBase {

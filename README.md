@@ -18,7 +18,7 @@ console.log($['..']['Something.txt'][$$data].toString('utf8'))
 
 Writing contents into file:
 ```javascript
-$.newfile = 'The text that overrites this file'.
+$.newfile[$$data] = 'The text that overrites this file.'
 ```
 
 Executing an executable:
