@@ -51,7 +51,7 @@ export interface FileEntryConstructor {
 }
 
 export interface RootDirectories {
-  readonly [directory: string]: FileEntry;
+  [directory: string]: FileEntry;
 }
 
 class FileEntryImpl extends Function implements FileEntryBase {
@@ -209,6 +209,11 @@ export const FileEntry = new Proxy<FileEntryConstructor>(FileEntryImpl as any, {
 export const roots: RootDirectories = {
   get $() {
     return FileEntryImpl.get(process.cwd());
+  },
+  set $(value: FileEntry) {
+    if(!value[Symbols.exists] || !value[Symbols.lstat].isDirectory())
+      throw new TypeError('Path does not exists.');
+    process.chdir(value[Symbols.path]);
   },
   get $home() {
     return FileEntryImpl.get(homedir());

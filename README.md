@@ -39,6 +39,12 @@ Delete a file:
 delete $root['Rubbish.tmp']
 ```
 
+Change current working directory:
+```javascript
+// Change current working directory to root.
+$ = $root;
+```
+
 WIP
 
 ## License

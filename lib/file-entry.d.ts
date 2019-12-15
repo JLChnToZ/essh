@@ -35,7 +35,7 @@ export interface FileEntryConstructor {
     readonly prototype: FileEntry;
 }
 export interface RootDirectories {
-    readonly [directory: string]: FileEntry;
+    [directory: string]: FileEntry;
 }
 export declare const FileEntry: FileEntryConstructor;
 export declare const roots: RootDirectories;
